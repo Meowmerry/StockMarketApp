@@ -8,5 +8,4 @@ Werkzeug==2.3.7
 SQLAlchemy>=2.0.30
 python-dotenv==1.0.0
 requests==2.31.0
-pytest==7.4.2
-pytest-flask==1.2.0
+gunicorn==21.2.0
