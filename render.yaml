@@ -10,7 +10,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///stock_market.db
+        value: sqlite:////tmp/stock_market.db
       - key: FLASK_ENV
         value: production
     healthCheckPath: /
