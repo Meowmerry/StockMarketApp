@@ -22,7 +22,7 @@ ENV/
 
 # Environment Variables
 .env
-
+.env.example
 # Database
 *.db
 instance/
