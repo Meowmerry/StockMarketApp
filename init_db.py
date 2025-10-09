@@ -55,10 +55,10 @@ def init_database():
         
         # Create sample trades
         trades_data = [
-            {'user_id': 1, 'stock_id': 1, 'quantity': 10, 'price': 175.00, 'trade_type': 'buy'},
-            {'user_id': 1, 'stock_id': 2, 'quantity': 5, 'price': 142.00, 'trade_type': 'buy'},
-            {'user_id': 2, 'stock_id': 3, 'quantity': 8, 'price': 378.50, 'trade_type': 'buy'},
-            {'user_id': 2, 'stock_id': 4, 'quantity': 3, 'price': 248.00, 'trade_type': 'buy'},
+            {'user_id': 1, 'stock_id': 1, 'quantity': 10, 'price': 175.00, 'side': 'buy'},
+            {'user_id': 1, 'stock_id': 2, 'quantity': 5, 'price': 142.00, 'side': 'buy'},
+            {'user_id': 2, 'stock_id': 3, 'quantity': 8, 'price': 378.50, 'side': 'buy'},
+            {'user_id': 2, 'stock_id': 4, 'quantity': 3, 'price': 248.00, 'side': 'buy'},
         ]
         
         for trade_data in trades_data:
