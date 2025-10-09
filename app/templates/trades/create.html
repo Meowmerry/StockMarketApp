@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}New Trade - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-exchange-alt"></i> New Trade
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="ticker" class="form-label">Stock Ticker *</label>
+                        <select class="form-select" id="ticker" name="ticker" required>
+                            <option value="">Select a stock...</option>
+                            {% for stock in stocks %}
+                            <option value="{{ stock.ticker }}" 
+                                    {% if request.args.get('ticker') == stock.ticker %}selected{% endif %}>
+                                {{ stock.ticker }} - {{ stock.name }} (${{ "%.2f"|format(stock.price) }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Choose the stock you want to trade</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="side" class="form-label">Trade Side *</label>
+                        <select class="form-select" id="side" name="side" required>
+                            <option value="">Select buy or sell...</option>
+                            <option value="buy">Buy</option>
+                            <option value="sell">Sell</option>
+                        </select>
+                        <div class="form-text">Buy to purchase shares, Sell to sell shares</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity *</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               min="1" placeholder="e.g., 100" required>
+                        <div class="form-text">Number of shares to trade</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price per Share *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="price" name="price" 
+                                   step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-text">Price per share in USD</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Trade Summary</h6>
+                        <p class="mb-0">Total Value: <span id="totalValue">$0.00</span></p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-exchange-alt"></i> Execute Trade
+                        </button>
+                        <a href="{{ url_for('trades.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Current Stock Prices
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Sector</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr>
+                                <td><strong>{{ stock.ticker }}</strong></td>
+                                <td>{{ stock.name }}</td>
+                                <td><strong>${{ "%.2f"|format(stock.price) }}</strong></td>
+                                <td>
+                                    {% if stock.sector %}
+                                        <span class="badge bg-secondary">{{ stock.sector }}</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateTotalValue() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const price = parseFloat(document.getElementById('price').value) || 0;
+    const total = quantity * price;
+    document.getElementById('totalValue').textContent = '$' + total.toFixed(2);
+}
+
+document.getElementById('quantity').addEventListener('input', updateTotalValue);
+document.getElementById('price').addEventListener('input', updateTotalValue);
+
+// Auto-fill current stock price when ticker is selected
+document.getElementById('ticker').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        // Extract price from option text (format: "TICKER - Name ($price)")
+        const priceMatch = selectedOption.text.match(/\$(\d+\.?\d*)/);
+        if (priceMatch) {
+            document.getElementById('price').value = priceMatch[1];
+            updateTotalValue();
+        }
+    }
+});
+</script>
+{% endblock %}

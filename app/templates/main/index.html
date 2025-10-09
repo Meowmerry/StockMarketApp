@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">Welcome to Stock Market App</h1>
+            <p class="lead">Track your investments, manage your portfolio, and execute trades with ease.</p>
+            {% if not current_user.is_authenticated %}
+            <hr class="my-4">
+            <p>Get started by creating an account or logging in to access all features.</p>
+            <a class="btn btn-light btn-lg" href="{{ url_for('auth.register') }}" role="button">Get Started</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Recent Stocks
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_stocks %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Sector</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in recent_stocks %}
+                            <tr>
+                                <td><strong>{{ stock.ticker }}</strong></td>
+                                <td>{{ stock.name }}</td>
+                                <td>${{ "%.2f"|format(stock.price) }}</td>
+                                <td><span class="badge bg-secondary">{{ stock.sector or 'N/A' }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{{ url_for('stocks.index') }}" class="btn btn-primary btn-sm">View All Stocks</a>
+                {% else %}
+                <p class="text-muted">No stocks available yet.</p>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('stocks.create') }}" class="btn btn-primary btn-sm">Add First Stock</a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt"></i> Recent Trades
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_user.is_authenticated and recent_trades %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Side</th>
+                                <th>Ticker</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in recent_trades %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if trade.side == 'buy' else 'danger' }}">
+                                        {{ trade.side.upper() }}
+                                    </span>
+                                </td>
+                                <td><strong>{{ trade.stock.ticker }}</strong></td>
+                                <td>{{ trade.quantity }}</td>
+                                <td>${{ "%.2f"|format(trade.price) }}</td>
+                                <td>{{ trade.timestamp.strftime('%m/%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{{ url_for('trades.index') }}" class="btn btn-primary btn-sm">View All Trades</a>
+                {% elif current_user.is_authenticated %}
+                <p class="text-muted">No trades yet. Start trading!</p>
+                <a href="{{ url_for('trades.create') }}" class="btn btn-primary btn-sm">Make First Trade</a>
+                {% else %}
+                <p class="text-muted">Please log in to view your trades.</p>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tachometer-alt"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('stocks.create') }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-plus"></i> Add Stock
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('trades.create') }}" class="btn btn-outline-success w-100 mb-2">
+                            <i class="fas fa-exchange-alt"></i> New Trade
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('portfolio.index') }}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-chart-pie"></i> Portfolio
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-warning w-100 mb-2">
+                            <i class="fas fa-dashboard"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

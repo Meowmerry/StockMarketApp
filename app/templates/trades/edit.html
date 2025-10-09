@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Trade #{{ trade.id }} - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit"></i> Edit Trade #{{ trade.id }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="ticker" class="form-label">Stock Ticker</label>
+                        <input type="text" class="form-control" id="ticker" name="ticker" 
+                               value="{{ trade.stock.ticker }}" readonly>
+                        <div class="form-text">Stock ticker cannot be changed</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="side" class="form-label">Trade Side *</label>
+                        <select class="form-select" id="side" name="side" required>
+                            <option value="buy" {% if trade.side == 'buy' %}selected{% endif %}>Buy</option>
+                            <option value="sell" {% if trade.side == 'sell' %}selected{% endif %}>Sell</option>
+                        </select>
+                        <div class="form-text">Buy to purchase shares, Sell to sell shares</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity *</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               min="1" value="{{ trade.quantity }}" required>
+                        <div class="form-text">Number of shares to trade</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price per Share *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="price" name="price" 
+                                   step="0.01" min="0.01" value="{{ trade.price }}" required>
+                        </div>
+                        <div class="form-text">Price per share in USD</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Trade Summary</h6>
+                        <p class="mb-0">Total Value: <span id="totalValue">${{ "%.2f"|format(trade.quantity * trade.price) }}</span></p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Update Trade
+                        </button>
+                        <a href="{{ url_for('trades.detail', trade_id=trade.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateTotalValue() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const price = parseFloat(document.getElementById('price').value) || 0;
+    const total = quantity * price;
+    document.getElementById('totalValue').textContent = '$' + total.toFixed(2);
+}
+
+document.getElementById('quantity').addEventListener('input', updateTotalValue);
+document.getElementById('price').addEventListener('input', updateTotalValue);
+</script>
+{% endblock %}

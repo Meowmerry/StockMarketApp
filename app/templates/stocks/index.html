@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Stocks - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-chart-line"></i> Stocks
+            </h1>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('stocks.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Stock
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if stocks.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Name</th>
+                                <th>Sector</th>
+                                <th>Price</th>
+                                <th>Shares Outstanding</th>
+                                <th>Market Cap</th>
+                                <th>Created</th>
+                                {% if current_user.is_authenticated %}
+                                <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks.items %}
+                            <tr>
+                                <td><strong>{{ stock.ticker }}</strong></td>
+                                <td>{{ stock.name }}</td>
+                                <td>
+                                    {% if stock.sector %}
+                                        <span class="badge bg-secondary">{{ stock.sector }}</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>${{ "%.2f"|format(stock.price) }}</strong></td>
+                                <td>
+                                    {% if stock.shares_outstanding %}
+                                        {{ "{:,}".format(stock.shares_outstanding) }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if stock.shares_outstanding %}
+                                        ${{ "{:,.0f}".format(stock.price * stock.shares_outstanding) }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ stock.created_at.strftime('%m/%d/%Y') }}</td>
+                                {% if current_user.is_authenticated %}
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('stocks.detail', ticker=stock.ticker) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('stocks.edit', ticker=stock.ticker) }}" 
+                                           class="btn btn-outline-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                onclick="confirmDelete('{{ stock.ticker }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if stocks.pages > 1 %}
+                <nav aria-label="Stocks pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if stocks.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('stocks.index', page=stocks.prev_num) }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in stocks.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != stocks.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('stocks.index', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if stocks.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('stocks.index', page=stocks.next_num) }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No stocks available</h5>
+                    <p class="text-muted">Be the first to add a stock to the system!</p>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('stocks.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add First Stock
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this stock? This action cannot be undone.</p>
+                <p class="text-muted">Note: You cannot delete stocks that have associated trades.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Stock</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(ticker) {
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = "{{ url_for('stocks.delete', ticker='') }}" + ticker;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

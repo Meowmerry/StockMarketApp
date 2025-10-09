@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-chart-pie"></i> My Portfolio
+            </h1>
+            <div>
+                <a href="{{ url_for('trades.create') }}" class="btn btn-success me-2">
+                    <i class="fas fa-exchange-alt"></i> New Trade
+                </a>
+                <button type="button" class="btn btn-outline-primary" onclick="refreshPortfolio()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Value</h5>
+                <h3 class="card-text">${{ "%.2f"|format(total_value) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Cost</h5>
+                <h3 class="card-text">${{ "%.2f"|format(total_cost) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center {{ 'bg-success' if total_unrealized_pnl >= 0 else 'bg-danger' }} text-white">
+            <div class="card-body">
+                <h5 class="card-title">Unrealized P&L</h5>
+                <h3 class="card-text">${{ "%.2f"|format(total_unrealized_pnl) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center {{ 'bg-success' if total_unrealized_pnl_percent >= 0 else 'bg-danger' }} text-white">
+            <div class="card-body">
+                <h5 class="card-title">P&L %</h5>
+                <h3 class="card-text">{{ "%.2f"|format(total_unrealized_pnl_percent) }}%</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Holdings -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Holdings
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if portfolio %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Company</th>
+                                <th>Shares</th>
+                                <th>Avg Price</th>
+                                <th>Current Price</th>
+                                <th>Current Value</th>
+                                <th>Cost Basis</th>
+                                <th>Unrealized P&L</th>
+                                <th>P&L %</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticker, position in portfolio.items() %}
+                            <tr>
+                                <td><strong>{{ ticker }}</strong></td>
+                                <td>{{ position.stock.name }}</td>
+                                <td>{{ position.shares }}</td>
+                                <td>${{ "%.2f"|format(position.avg_price) }}</td>
+                                <td>${{ "%.2f"|format(position.stock.price) }}</td>
+                                <td><strong>${{ "%.2f"|format(position.current_value) }}</strong></td>
+                                <td>${{ "%.2f"|format(position.total_cost) }}</td>
+                                <td class="{{ 'positive' if position.unrealized_pnl >= 0 else 'negative' }}">
+                                    <strong>${{ "%.2f"|format(position.unrealized_pnl) }}</strong>
+                                </td>
+                                <td class="{{ 'positive' if position.unrealized_pnl_percent >= 0 else 'negative' }}">
+                                    <strong>{{ "%.2f"|format(position.unrealized_pnl_percent) }}%</strong>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('stocks.detail', ticker=ticker) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('trades.create') }}?ticker={{ ticker }}" 
+                                           class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Portfolio Allocation Chart -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Top Performers</h6>
+                            </div>
+                            <div class="card-body">
+                                {% set top_performers = portfolio.items() | list | sort(attribute='1.unrealized_pnl_percent', reverse=true) %}
+                                {% for ticker, position in top_performers[:5] %}
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><strong>{{ ticker }}</strong></span>
+                                    <span class="{{ 'positive' if position.unrealized_pnl_percent >= 0 else 'negative' }}">
+                                        {{ "%.2f"|format(position.unrealized_pnl_percent) }}%
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Largest Holdings</h6>
+                            </div>
+                            <div class="card-body">
+                                {% set largest_holdings = portfolio.items() | list | sort(attribute='1.current_value', reverse=true) %}
+                                {% for ticker, position in largest_holdings[:5] %}
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><strong>{{ ticker }}</strong></span>
+                                    <span>${{ "%.2f"|format(position.current_value) }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No holdings in your portfolio</h5>
+                    <p class="text-muted">Start by making your first trade to build your portfolio!</p>
+                    <a href="{{ url_for('trades.create') }}" class="btn btn-success">
+                        <i class="fas fa-exchange-alt"></i> Make First Trade
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Summary -->
+{% if portfolio %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Performance Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Best Performer</h6>
+                        {% set best_performer = portfolio.items() | list | sort(attribute='1.unrealized_pnl_percent', reverse=true) | first %}
+                        {% if best_performer %}
+                        <p class="mb-0">
+                            <strong>{{ best_performer[0] }}</strong>: 
+                            <span class="positive">{{ "%.2f"|format(best_performer[1].unrealized_pnl_percent) }}%</span>
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Worst Performer</h6>
+                        {% set worst_performer = portfolio.items() | list | sort(attribute='1.unrealized_pnl_percent') | first %}
+                        {% if worst_performer %}
+                        <p class="mb-0">
+                            <strong>{{ worst_performer[0] }}</strong>: 
+                            <span class="negative">{{ "%.2f"|format(worst_performer[1].unrealized_pnl_percent) }}%</span>
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Total Positions</h6>
+                        <p class="mb-0"><strong>{{ portfolio|length }}</strong> different stocks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshPortfolio() {
+    location.reload();
+}
+</script>
+{% endblock %}

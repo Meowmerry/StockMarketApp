@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ stock.ticker }} - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-chart-line"></i> {{ stock.ticker }}
+                </h1>
+                <p class="text-muted">{{ stock.name }}</p>
+            </div>
+            {% if current_user.is_authenticated %}
+            <div>
+                <a href="{{ url_for('trades.create') }}?ticker={{ stock.ticker }}" class="btn btn-success me-2">
+                    <i class="fas fa-exchange-alt"></i> Trade
+                </a>
+                <a href="{{ url_for('stocks.edit', ticker=stock.ticker) }}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Stock Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>Ticker:</strong></td>
+                        <td>{{ stock.ticker }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Name:</strong></td>
+                        <td>{{ stock.name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sector:</strong></td>
+                        <td>
+                            {% if stock.sector %}
+                                <span class="badge bg-secondary">{{ stock.sector }}</span>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Current Price:</strong></td>
+                        <td><h4 class="text-primary mb-0">${{ "%.2f"|format(stock.price) }}</h4></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Shares Outstanding:</strong></td>
+                        <td>
+                            {% if stock.shares_outstanding %}
+                                {{ "{:,}".format(stock.shares_outstanding) }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Market Cap:</strong></td>
+                        <td>
+                            {% if stock.shares_outstanding %}
+                                <strong>${{ "{:,.0f}".format(stock.price * stock.shares_outstanding) }}</strong>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Created:</strong></td>
+                        <td>{{ stock.created_at.strftime('%B %d, %Y') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Price Simulation
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Simulate price changes for this stock.</p>
+                
+                <div class="mb-3">
+                    <label for="simulationChange" class="form-label">Price Change (%)</label>
+                    <input type="number" class="form-control" id="simulationChange" 
+                           placeholder="e.g., 5 for +5%, -3 for -3%" step="0.1">
+                </div>
+                
+                <button type="button" class="btn btn-primary" onclick="simulatePrice()">
+                    <i class="fas fa-calculator"></i> Simulate
+                </button>
+                
+                <div id="simulationResult" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Simulated Price:</strong> $<span id="simulatedPrice"></span>
+                        <br>
+                        <strong>Change:</strong> $<span id="priceChange"></span> 
+                        (<span id="percentChange"></span>%)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt"></i> Your Trades for {{ stock.ticker }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% set user_trades = stock.trades.filter_by(user_id=current_user.id).order_by(Trade.timestamp.desc()).all() %}
+                {% if user_trades %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Side</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in user_trades %}
+                            <tr>
+                                <td>{{ trade.timestamp.strftime('%m/%d/%Y %H:%M') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if trade.side == 'buy' else 'danger' }}">
+                                        {{ trade.side.upper() }}
+                                    </span>
+                                </td>
+                                <td>{{ trade.quantity }}</td>
+                                <td>${{ "%.2f"|format(trade.price) }}</td>
+                                <td>${{ "%.2f"|format(trade.quantity * trade.price) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">You haven't traded this stock yet.</p>
+                <a href="{{ url_for('trades.create') }}?ticker={{ stock.ticker }}" class="btn btn-primary">
+                    <i class="fas fa-exchange-alt"></i> Make First Trade
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function simulatePrice() {
+    const change = parseFloat(document.getElementById('simulationChange').value);
+    const currentPrice = {{ stock.price }};
+    
+    if (isNaN(change)) {
+        alert('Please enter a valid number for price change');
+        return;
+    }
+    
+    const newPrice = currentPrice * (1 + change / 100);
+    const priceChange = newPrice - currentPrice;
+    const percentChange = change;
+    
+    document.getElementById('simulatedPrice').textContent = newPrice.toFixed(2);
+    document.getElementById('priceChange').textContent = priceChange.toFixed(2);
+    document.getElementById('percentChange').textContent = percentChange.toFixed(2);
+    
+    const resultDiv = document.getElementById('simulationResult');
+    resultDiv.style.display = 'block';
+    
+    // Add color coding
+    const alertDiv = resultDiv.querySelector('.alert');
+    if (change > 0) {
+        alertDiv.className = 'alert alert-success';
+    } else if (change < 0) {
+        alertDiv.className = 'alert alert-danger';
+    } else {
+        alertDiv.className = 'alert alert-info';
+    }
+}
+</script>
+{% endblock %}

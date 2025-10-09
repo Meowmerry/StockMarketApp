@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Price Simulation - Stock Market App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-line"></i> Price Simulation
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-dice"></i> Random Price Changes
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.simulate_random') }}">
+                    <div class="mb-3">
+                        <label for="volatility" class="form-label">Volatility (%)</label>
+                        <input type="number" class="form-control" id="volatility" name="volatility" 
+                               value="2" min="0.1" max="50" step="0.1">
+                        <div class="form-text">Maximum price change percentage</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="max_stocks" class="form-label">Max Stocks</label>
+                        <input type="number" class="form-control" id="max_stocks" name="max_stocks" 
+                               placeholder="Leave empty for all stocks">
+                        <div class="form-text">Limit number of stocks to update</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-dice"></i> Simulate Random Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-arrow-down text-danger"></i> Market Crash
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.simulate_crash') }}">
+                    <div class="mb-3">
+                        <label for="crash_percent" class="form-label">Crash Percentage (%)</label>
+                        <input type="number" class="form-control" id="crash_percent" name="crash_percent" 
+                               value="15" min="1" max="50" step="1">
+                        <div class="form-text">Percentage to drop all stock prices</div>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="fas fa-arrow-down"></i> Simulate Crash
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-arrow-up text-success"></i> Market Rally
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.simulate_rally') }}">
+                    <div class="mb-3">
+                        <label for="rally_percent" class="form-label">Rally Percentage (%)</label>
+                        <input type="number" class="form-control" id="rally_percent" name="rally_percent" 
+                               value="10" min="1" max="50" step="1">
+                        <div class="form-text">Percentage to increase all stock prices</div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-arrow-up"></i> Simulate Rally
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Current Stock Prices
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stocks %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Name</th>
+                                <th>Current Price</th>
+                                <th>Sector</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr>
+                                <td><strong>{{ stock.ticker }}</strong></td>
+                                <td>{{ stock.name }}</td>
+                                <td><strong>${{ "%.2f"|format(stock.price) }}</strong></td>
+                                <td>
+                                    {% if stock.sector %}
+                                        <span class="badge bg-secondary">{{ stock.sector }}</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No stocks available for simulation.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle"></i> How Price Simulation Works</h6>
+            <ul class="mb-0">
+                <li><strong>Random Changes:</strong> Each stock price changes by a random amount within the specified volatility range</li>
+                <li><strong>Market Crash:</strong> All stock prices decrease by the specified percentage</li>
+                <li><strong>Market Rally:</strong> All stock prices increase by the specified percentage</li>
+                <li>Price changes affect your portfolio's unrealized P&L calculations in real-time</li>
+                <li>Use these tools to test how your portfolio performs under different market conditions</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
