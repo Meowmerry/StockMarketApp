@@ -4,12 +4,14 @@ Handles chat API endpoints and chat page rendering.
 """
 
 import uuid
+import os
 from flask import request, jsonify, render_template, session
 from flask_login import current_user
 from app.chat import bp
 from app import db
 from app.models import ChatMessage, Stock, Trade
 from app.chat_service import get_chat_service
+from app.mock_chat_service import get_mock_chat_service
 from sqlalchemy import func, desc
 
 
@@ -68,8 +70,17 @@ def chat_api():
         if current_user.is_authenticated:
             user_context = _get_user_context(current_user.id)
 
-        # Get AI response
+        # Try real OpenAI service first, fall back to mock if unavailable
         chat_service = get_chat_service()
+
+        # Check if we should use mock service (for testing without OpenAI credits)
+        use_mock = os.environ.get('USE_MOCK_CHAT', 'false').lower() == 'true'
+
+        if use_mock or not chat_service.is_available():
+            # Use mock service for testing without OpenAI
+            print("ℹ️  Using mock chat service (OpenAI not available)")
+            chat_service = get_mock_chat_service()
+
         result = chat_service.get_response(
             user_message=user_message,
             conversation_history=history,
