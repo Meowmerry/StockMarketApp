@@ -61,7 +61,7 @@ class Trade(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Numeric(10, 2), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -74,6 +74,28 @@ class Trade(db.Model):
             'timestamp': self.timestamp.isoformat(),
             'total_value': float(self.quantity * self.price)
         }
-    
+
     def __repr__(self):
         return f'<Trade {self.side} {self.quantity} {self.stock.ticker} @ ${self.price}>'
+
+class ChatMessage(db.Model):
+    """Store chat messages for conversation history"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Nullable for anonymous users
+    session_id = db.Column(db.String(64), nullable=False, index=True)  # Track conversations
+    role = db.Column(db.String(10), nullable=False)  # 'user' or 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'role': self.role,
+            'content': self.content,
+            'timestamp': self.timestamp.isoformat()
+        }
+
+    def __repr__(self):
+        return f'<ChatMessage {self.role}: {self.content[:50]}...>'

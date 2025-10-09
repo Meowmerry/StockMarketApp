@@ -10,6 +10,7 @@ A full-stack stock market web application built with **Python only** - no JavaSc
 - **Trade Execution**: Buy/sell trades with quantity, price, and timestamp tracking
 - **Portfolio View**: Real-time portfolio aggregation with unrealized P&L calculations
 - **Price Simulation**: Simulate market conditions (random changes, crashes, rallies)
+- **AI Chatbot**: Educational AI assistant powered by OpenAI GPT for stock market questions
 - **REST API**: Complete JSON API for all operations
 - **Responsive UI**: Modern Bootstrap-based interface with Jinja2 templates
 
@@ -48,7 +49,13 @@ This will automatically set up the virtual environment, install dependencies, an
    pip install -r requirements.txt
    ```
 
-3. **Initialize the database**
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your OpenAI API key (required for AI chatbot)
+   ```
+
+4. **Initialize the database**
    ```bash
    python run.py
    ```
@@ -202,19 +209,42 @@ curl -X POST http://localhost:5001/api/trades \
 - Test market crash scenarios
 - Simulate market rallies
 
+### 6. AI Chatbot Assistant
+- Access the chat page at `/chat`
+- Use the floating chat widget on any page (bottom-right corner)
+- Ask educational questions about stocks and investing
+- Get portfolio summaries (when logged in)
+- Learn about stock market concepts
+
 ## 🔧 Configuration
 
-The application uses environment variables for configuration:
+The application uses environment variables for configuration. Copy `.env.example` to `.env` and configure:
 
 ```bash
-export SECRET_KEY="your-secret-key-here"
-export DATABASE_URL="sqlite:///stock_market.db"
-export FLASK_ENV="development"
+# Flask Configuration
+SECRET_KEY=your-secret-key-here-change-in-production
+FLASK_ENV=development
+
+# Database Configuration
+DATABASE_URL=sqlite:///stock_market.db
+
+# OpenAI API Configuration (Required for AI Chatbot)
+OPENAI_API_KEY=your-openai-api-key-here
 ```
+
+### Getting an OpenAI API Key
+
+1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign up or log in to your account
+3. Navigate to API Keys section
+4. Create a new API key
+5. Add it to your `.env` file as `OPENAI_API_KEY`
+
+**Note**: The chatbot will display a fallback message if the API key is not configured.
 
 For PostgreSQL:
 ```bash
-export DATABASE_URL="postgresql://user:password@localhost/stock_market"
+DATABASE_URL=postgresql://user:password@localhost/stock_market
 ```
 
 ## 🏗️ Project Structure
@@ -223,8 +253,10 @@ export DATABASE_URL="postgresql://user:password@localhost/stock_market"
 stock_market_app/
 ├── app/
 │   ├── __init__.py          # Flask app factory
-│   ├── models.py            # SQLAlchemy models
+│   ├── models.py            # SQLAlchemy models (User, Stock, Trade, ChatMessage)
 │   ├── utils.py             # Utility functions
+│   ├── chat_prompts.py      # AI chatbot system prompts and templates
+│   ├── chat_service.py      # OpenAI API integration service
 │   ├── auth/                # Authentication blueprint
 │   ├── main/                # Main routes blueprint
 │   ├── stocks/              # Stocks blueprint
@@ -232,11 +264,16 @@ stock_market_app/
 │   ├── portfolio/           # Portfolio blueprint
 │   ├── api/                 # API blueprint
 │   ├── admin/               # Admin/simulation blueprint
+│   ├── chat/                # AI chatbot blueprint
 │   └── templates/           # Jinja2 templates
+│       ├── chat/            # Chat templates (index.html, widget.html)
+│       └── ...
 ├── tests/                   # Test files
 ├── run.py                   # Application entry point
+├── init_db.py              # Database initialization script
 ├── sample_data.py           # Sample data script
 ├── requirements.txt         # Python dependencies
+├── .env.example            # Environment variables template
 └── README.md               # This file
 ```
 
@@ -313,18 +350,48 @@ This project is open source and available under the MIT License.
 - Review the API documentation above
 - Examine the sample data for realistic test cases
 
+## 🤖 AI Chatbot Features
+
+The application includes an intelligent AI chatbot powered by OpenAI GPT:
+
+### What the Chatbot Can Do:
+- ✅ Explain stock market concepts and terminology
+- ✅ Provide information about stocks in the database
+- ✅ Summarize your portfolio holdings (when logged in)
+- ✅ Answer educational questions about investing
+- ✅ Help users understand their trades and P&L
+
+### What the Chatbot Won't Do:
+- ❌ Give personalized investment advice
+- ❌ Recommend specific stocks to buy or sell
+- ❌ Predict stock prices or market movements
+- ❌ Provide financial planning or tax advice
+
+### Usage:
+- **Full Chat Page**: Visit `/chat` for a dedicated chat interface
+- **Floating Widget**: Use the chat button (bottom-right) on any page
+- **Context-Aware**: Automatically accesses your portfolio data when logged in
+
+### Configuration:
+The chatbot uses GPT-3.5-turbo for cost-efficiency and includes:
+- Safety filters to prevent inappropriate advice requests
+- Graceful fallback when API is unavailable
+- Conversation history for context
+- Rate limit handling
+
 ## 🎯 Future Enhancements
 
 Potential improvements for the application:
 
-- Real-time stock price feeds
+- Real-time stock price feeds integration
 - Advanced charting and analytics
 - Email notifications for price alerts
 - Multi-currency support
-- Advanced portfolio analytics
+- Advanced portfolio analytics and insights
 - Social features (following other traders)
 - Mobile app integration
 - Real-time WebSocket updates
+- Enhanced AI chatbot with more data sources
 
 ---
 

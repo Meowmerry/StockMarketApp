@@ -13,5 +13,7 @@ services:
         value: sqlite:////tmp/stock_market.db
       - key: FLASK_ENV
         value: production
+      - key: OPENAI_API_KEY
+        sync: false  # Add manually in Render dashboard
     healthCheckPath: /
     plan: free

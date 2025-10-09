@@ -23,7 +23,7 @@ def create_app(config_class=Config):
     login_manager.login_message_category = 'info'
     
     # Import models to ensure they are registered with SQLAlchemy
-    from app.models import User, Stock, Trade
+    from app.models import User, Stock, Trade, ChatMessage
     
     # Register blueprints
     from app.auth import bp as auth_bp
@@ -46,5 +46,8 @@ def create_app(config_class=Config):
     
     from app.admin import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix='/admin')
-    
+
+    from app.chat import bp as chat_bp
+    app.register_blueprint(chat_bp, url_prefix='/chat')
+
     return app

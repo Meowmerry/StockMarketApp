@@ -68,6 +68,11 @@
                         <a class="nav-link" href="{{ url_for('admin.simulate') }}">Price Simulation</a>
                     </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('chat.chat_page') }}">
+                            <i class="fas fa-robot"></i> AI Chat
+                        </a>
+                    </li>
                 </ul>
                 
                 <ul class="navbar-nav">
@@ -115,6 +120,9 @@
             <p class="text-muted">&copy; 2024 Stock Market App. Built with Flask and Python.</p>
         </div>
     </footer>
+
+    <!-- Floating Chat Widget -->
+    {% include 'chat/widget.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}

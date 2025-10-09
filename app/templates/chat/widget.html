@@ -1,0 +1,289 @@
+<!-- Floating Chat Widget -->
+<!-- Include this in base.html to show on all pages -->
+
+<div id="chatWidget" class="chat-widget">
+    <!-- Chat Widget Button -->
+    <button id="chatWidgetBtn" class="chat-widget-btn" title="Open StockBot">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+
+    <!-- Chat Widget Window -->
+    <div id="chatWidgetWindow" class="chat-widget-window" style="display: none;">
+        <div class="chat-widget-header">
+            <h6 class="mb-0"><i class="fas fa-robot"></i> StockBot</h6>
+            <div>
+                <button id="minimizeWidget" class="btn btn-sm btn-link text-white p-0 me-2" title="Minimize">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button id="closeWidget" class="btn btn-sm btn-link text-white p-0" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="chat-widget-body" id="widgetMessages">
+            <div class="widget-message assistant">
+                <p class="mb-1"><strong>StockBot</strong></p>
+                <p class="mb-0">Hi! I'm your stock market assistant. How can I help you today?</p>
+            </div>
+        </div>
+        <div class="chat-widget-footer">
+            <form id="widgetForm" class="d-flex gap-2">
+                <input
+                    type="text"
+                    id="widgetInput"
+                    class="form-control form-control-sm"
+                    placeholder="Ask me anything..."
+                    maxlength="1000"
+                    required
+                >
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-widget {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .chat-widget-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .chat-widget-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .chat-widget-window {
+        position: absolute;
+        bottom: 80px;
+        right: 0;
+        width: 350px;
+        height: 500px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .chat-widget-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-widget-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background: #f8f9fa;
+    }
+
+    .chat-widget-footer {
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+        background: white;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .widget-message {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .widget-message.user {
+        background: #007bff;
+        color: white;
+        margin-left: 20%;
+        text-align: right;
+    }
+
+    .widget-message.assistant {
+        background: white;
+        border: 1px solid #dee2e6;
+        margin-right: 20%;
+    }
+
+    .widget-message p {
+        font-size: 0.9rem;
+    }
+
+    .widget-typing {
+        display: inline-block;
+        padding: 10px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .widget-typing span {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background-color: #6c757d;
+        border-radius: 50%;
+        margin: 0 2px;
+        animation: typing 1.4s infinite;
+    }
+
+    .widget-typing span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .widget-typing span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @media (max-width: 768px) {
+        .chat-widget-window {
+            width: calc(100vw - 40px);
+            height: 70vh;
+            bottom: 80px;
+            right: 10px;
+        }
+    }
+</style>
+
+<script>
+    const chatWidgetBtn = document.getElementById('chatWidgetBtn');
+    const chatWidgetWindow = document.getElementById('chatWidgetWindow');
+    const closeWidget = document.getElementById('closeWidget');
+    const minimizeWidget = document.getElementById('minimizeWidget');
+    const widgetForm = document.getElementById('widgetForm');
+    const widgetInput = document.getElementById('widgetInput');
+    const widgetMessages = document.getElementById('widgetMessages');
+
+    // Toggle widget
+    chatWidgetBtn.addEventListener('click', () => {
+        const isVisible = chatWidgetWindow.style.display === 'flex';
+        chatWidgetWindow.style.display = isVisible ? 'none' : 'flex';
+        if (!isVisible) {
+            widgetInput.focus();
+        }
+    });
+
+    // Close widget
+    closeWidget.addEventListener('click', () => {
+        chatWidgetWindow.style.display = 'none';
+    });
+
+    // Minimize widget
+    minimizeWidget.addEventListener('click', () => {
+        chatWidgetWindow.style.display = 'none';
+    });
+
+    // Add widget message
+    function addWidgetMessage(content, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `widget-message ${isUser ? 'user' : 'assistant'}`;
+
+        const label = isUser ? 'You' : 'StockBot';
+        messageDiv.innerHTML = `
+            <p class="mb-1"><strong>${label}</strong></p>
+            <p class="mb-0">${escapeHtml(content)}</p>
+        `;
+
+        widgetMessages.appendChild(messageDiv);
+        widgetMessages.scrollTop = widgetMessages.scrollHeight;
+    }
+
+    // Show typing in widget
+    function showWidgetTyping() {
+        const typing = document.createElement('div');
+        typing.className = 'widget-typing';
+        typing.id = 'widgetTyping';
+        typing.innerHTML = '<span></span><span></span><span></span>';
+        widgetMessages.appendChild(typing);
+        widgetMessages.scrollTop = widgetMessages.scrollHeight;
+    }
+
+    // Remove typing
+    function removeWidgetTyping() {
+        const typing = document.getElementById('widgetTyping');
+        if (typing) typing.remove();
+    }
+
+    // Send widget message
+    async function sendWidgetMessage(message) {
+        if (!message.trim()) return;
+
+        widgetInput.disabled = true;
+        addWidgetMessage(message, true);
+        widgetInput.value = '';
+        showWidgetTyping();
+
+        try {
+            const response = await fetch('/chat/api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+            removeWidgetTyping();
+
+            if (response.ok) {
+                addWidgetMessage(data.response);
+            } else {
+                addWidgetMessage('Sorry, I encountered an error. Please try again.');
+            }
+        } catch (error) {
+            removeWidgetTyping();
+            addWidgetMessage('Network error. Please check your connection.');
+        } finally {
+            widgetInput.disabled = false;
+            widgetInput.focus();
+        }
+    }
+
+    // Widget form handler
+    widgetForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = widgetInput.value.trim();
+        sendWidgetMessage(message);
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>

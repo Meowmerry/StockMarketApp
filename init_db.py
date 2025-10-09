@@ -4,7 +4,7 @@ Database initialization script for Render.com deployment
 """
 
 from app import create_app, db
-from app.models import User, Stock, Trade
+from app.models import User, Stock, Trade, ChatMessage
 import os
 
 def init_database():
