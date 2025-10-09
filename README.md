@@ -17,9 +17,10 @@ A full-stack stock market web application built with **Python only** - no JavaSc
 ### Technical Features
 - **Backend**: Flask + SQLAlchemy
 - **Frontend**: Server-rendered HTML templates (Jinja2)
-- **Database**: SQLite (easily configurable for PostgreSQL)
+- **Database**: PostgreSQL (with SQLite fallback for local dev)
 - **Authentication**: Flask-Login with secure password hashing
 - **API**: RESTful endpoints with JSON responses
+- **AI Integration**: OpenAI GPT-3.5-turbo chatbot
 - **Testing**: Comprehensive unit and integration tests
 
 ## 📋 Requirements
@@ -52,8 +53,12 @@ This will automatically set up the virtual environment, install dependencies, an
 3. **Configure environment variables**
    ```bash
    cp .env.example .env
-   # Edit .env and add your OpenAI API key (required for AI chatbot)
+   # Edit .env and configure:
+   # - OPENAI_API_KEY (required for AI chatbot)
+   # - DATABASE_URL (optional - defaults to SQLite)
    ```
+
+   See [POSTGRESQL_SETUP.md](POSTGRESQL_SETUP.md) for database configuration.
 
 4. **Initialize the database**
    ```bash

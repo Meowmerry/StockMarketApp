@@ -1,3 +1,9 @@
+databases:
+  - name: stock-market-db
+    databaseName: stock_market_db
+    user: stock_market_user
+    plan: free
+
 services:
   - type: web
     name: stock-market-app
@@ -10,7 +16,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:////tmp/stock_market.db
+        fromDatabase:
+          name: stock-market-db
+          property: connectionString
       - key: FLASK_ENV
         value: production
       - key: OPENAI_API_KEY
