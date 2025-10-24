@@ -3,17 +3,41 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from config import Config
+import os
+from dotenv import load_dotenv
 
-db = SQLAlchemy()
+load_dotenv()
+
+from sqlalchemy.orm import DeclarativeBase
+class Base(DeclarativeBase):
+  pass
+
+
+# db = SQLAlchemy(model_class=Base)
+# db = SQLAlchemy("postgresql://thasanee@localhost:5432/stock_market")
+# db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
 
+app = Flask(__name__)
+# app.config.from_object(config_class)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+# print( 'what is the url', os.getenv('DATABASE_URL') )
+# app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://thasanee@localhost:5432/stock_market_db"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Recommended to disable for performance
+db = SQLAlchemy(app)
+
+
 def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
+    # app = Flask(__name__)
+    # # app.config.from_object(config_class)
+    # app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://thasanee@localhost:5432/stock_market'
+    # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Recommended to disable for performance
+    # db = SQLAlchemy(app)
     
     # Initialize extensions
-    db.init_app(app)
+    # with app.app_context():
+    # db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     

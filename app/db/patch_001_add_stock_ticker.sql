@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE stock ADD COLUMN ticker TEXT;
+
+COMMIT;

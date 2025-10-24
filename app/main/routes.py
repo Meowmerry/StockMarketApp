@@ -8,7 +8,7 @@ from app.main import bp
 @bp.route('/index')
 def index():
     # Get recent stocks and trades for homepage
-    recent_stocks = Stock.query.order_by(Stock.created_at.desc()).limit(5).all()
+    # recent_stocks = Stock.query.order_by(Stock.created_at.desc()).limit(5).all()
     
     if current_user.is_authenticated:
         recent_trades = Trade.query.filter_by(user_id=current_user.id).order_by(Trade.timestamp.desc()).limit(5).all()
@@ -16,7 +16,7 @@ def index():
         recent_trades = []
     
     return render_template('main/index.html', 
-                         recent_stocks=recent_stocks, 
+                        #  recent_stocks=recent_stocks, 
                          recent_trades=recent_trades)
 
 @bp.route('/dashboard')

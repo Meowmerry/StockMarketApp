@@ -15,7 +15,7 @@ from app.mock_chat_service import get_mock_chat_service
 from sqlalchemy import func, desc
 
 
-@bp.route('/chat')
+@bp.route('/')
 def chat_page():
     """Render the chat page"""
     # Generate session ID for conversation tracking
@@ -25,7 +25,7 @@ def chat_page():
     return render_template('chat/index.html')
 
 
-@bp.route('/chat/api', methods=['POST'])
+@bp.route('/api', methods=['POST'])
 def chat_api():
     """
     Main chat API endpoint.
@@ -76,6 +76,10 @@ def chat_api():
         # Check if we should use mock service (for testing without OpenAI credits)
         use_mock = os.environ.get('USE_MOCK_CHAT', 'false').lower() == 'true'
 
+        use_mock = False
+
+        print('chat_service is available?', chat_service.is_available())
+
         if use_mock or not chat_service.is_available():
             # Use mock service for testing without OpenAI
             print("ℹ️  Using mock chat service (OpenAI not available)")
@@ -86,6 +90,7 @@ def chat_api():
             conversation_history=history,
             user_context=user_context
         )
+        print('result', result)
 
         # Save user message to database
         user_msg = ChatMessage(
@@ -122,7 +127,7 @@ def chat_api():
         }), 500
 
 
-@bp.route('/chat/history', methods=['GET'])
+@bp.route('/history', methods=['GET'])
 def chat_history():
     """Get chat history for the current session"""
     try:
@@ -145,7 +150,7 @@ def chat_history():
         return jsonify({'error': 'Failed to load chat history'}), 500
 
 
-@bp.route('/chat/clear', methods=['POST'])
+@bp.route('/clear', methods=['POST'])
 def clear_chat():
     """Clear chat history for the current session"""
     try:

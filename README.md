@@ -42,7 +42,7 @@ This will automatically set up the virtual environment, install dependencies, an
 1. **Create virtual environment**
    ```bash
    python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate  # On Windows: venv\Scripts\ activate
    ```
 
 2. **Install dependencies**
