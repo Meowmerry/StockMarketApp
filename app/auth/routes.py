@@ -30,7 +30,7 @@ def register():
             error_msg = 'Email already registered.'
             if request.is_json:
                 return jsonify({'error': error_msg}), 400
-            flash(error_msg, 'error')
+            flash(error_msg, 'error')  # error here - no email validation?
             return render_template('auth/register.html')
         
         user = User(username=username, email=email)

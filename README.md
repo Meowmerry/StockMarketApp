@@ -66,7 +66,7 @@ This will automatically set up the virtual environment, install dependencies, an
    ```
    This will create the database and start the development server.
 
-4. **Populate with sample data (optional)**
+5. **Populate with sample data (optional)**
    ```bash
    python sample_data.py
    ```
@@ -85,6 +85,71 @@ The application will be available at `http://localhost:5001`
 export FLASK_ENV=production
 python run.py
 ```
+
+## 🗄️ Database Migrations
+
+This application uses Flask-Migrate (Alembic) to manage database schema changes.
+
+### Adding New Columns or Tables
+
+When you modify your database models in `app/models.py`, follow these steps:
+
+1. **Make your model changes**
+   ```python
+   # Example: Adding a new column to the Stock model
+   class Stock(db.Model):
+       # ... existing columns ...
+       market_cap = db.Column(db.BigInteger)  # New column
+   ```
+
+2. **Apply any pending migrations first**
+   ```bash
+   flask db upgrade
+   ```
+
+3. **Generate a migration script**
+   ```bash
+   flask db migrate -m "Add market_cap column to Stock table"
+   ```
+   This creates a new migration file in `migrations/versions/`
+
+4. **Review the generated migration**
+   Check the generated file in `migrations/versions/` to ensure it's correct
+
+5. **Apply the migration**
+   ```bash
+   flask db upgrade
+   ```
+
+### Common Migration Commands
+
+```bash
+# Initialize migrations (only needed once per project)
+flask db init
+
+# Generate a new migration after model changes
+flask db migrate -m "Description of changes"
+
+# Apply all pending migrations
+flask db upgrade
+
+# Revert the last migration
+flask db downgrade
+
+# Show current migration version
+flask db current
+
+# Show migration history
+flask db history
+```
+
+### Migration Best Practices
+
+- Always review auto-generated migrations before applying
+- Write descriptive migration messages
+- Test migrations on a development database first
+- Backup production data before running migrations
+- Never edit migrations that have been applied to production
 
 ## 🧪 Running Tests
 

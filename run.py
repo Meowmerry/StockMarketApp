@@ -75,6 +75,10 @@ def populate_sample_data():
     print("Sample data populated successfully.")
 
 if __name__ == '__main__':
+    app.secret_key = "super secret key" # Needed for session management # https://stackoverflow.com/questions/26080872/secret-key-not-set-in-flask-session-using-the-flask-session-extension/26080974#26080974
     with app.app_context():
         db.create_all()
     app.run(debug=True, port=5001)
+
+
+
