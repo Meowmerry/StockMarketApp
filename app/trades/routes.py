@@ -22,7 +22,14 @@ def index():
 @login_required
 def detail(trade_id):
     trade = Trade.query.filter_by(id=trade_id, user_id=current_user.id).first_or_404()
-    return render_template('trades/detail.html', trade=trade)
+
+    # Get user trades for this stock, ordered by timestamp descending
+    user_trades = Trade.query.filter_by(
+        user_id=current_user.id,
+        stock_id=trade.stock_id
+    ).order_by(Trade.timestamp.desc()).all()
+
+    return render_template('trades/detail.html', trade=trade, user_trades=user_trades)
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required

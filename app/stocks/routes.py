@@ -1,7 +1,7 @@
 from flask import render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Stock
+from app.models import Stock, Trade
 from app.stocks import bp
 from decimal import Decimal
 
@@ -19,7 +19,16 @@ def index():
 @bp.route('/<ticker>')
 def detail(ticker):
     stock = Stock.query.filter_by(ticker=ticker).first_or_404()
-    return render_template('stocks/detail.html', stock=stock)
+
+    # Get user trades for this stock if user is authenticated
+    user_trades = []
+    if current_user.is_authenticated:
+        user_trades = Trade.query.filter_by(
+            user_id=current_user.id,
+            stock_id=stock.id
+        ).order_by(Trade.timestamp.desc()).all()
+
+    return render_template('stocks/detail.html', stock=stock, user_trades=user_trades)
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required

@@ -130,7 +130,6 @@
                 </h5>
             </div>
             <div class="card-body">
-                {% set user_trades = stock.trades.filter_by(user_id=current_user.id).order_by(Trade.timestamp.desc()).all() %}
                 {% if user_trades %}
                 <div class="table-responsive">
                     <table class="table table-sm">
