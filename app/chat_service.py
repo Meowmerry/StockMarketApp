@@ -12,7 +12,6 @@ from app.chat_prompts import (
     get_safety_filter_keywords
 )
 
-
 class ChatService:
     """Service class for handling AI chat interactions"""
 
