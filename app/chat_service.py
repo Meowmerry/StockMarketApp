@@ -1,38 +1,65 @@
 """
-Chat service module for OpenAI integration.
-Handles communication with OpenAI API and provides fallback responses.
+Chat service module for AI chat integration.
+Handles communication with ParlAI/blended_skill_talk model and provides fallback responses.
 """
 
-import os
 from typing import Optional, Dict, List
-from openai import OpenAI, OpenAIError, RateLimitError, APIConnectionError
+from transformers import AutoTokenizer,AutoModelForCausalLM
+import torch
 from app.chat_prompts import (
     get_system_prompt_with_context,
     get_fallback_response,
     get_safety_filter_keywords
 )
+MODEL_NAME = "ProsusAI/finbert"
+"""
 
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_NAME,
+    device_map="auto"
+)
+pipe = pipeline(
+    task="text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    max_new_tokens=128,
+    return_full_text=False,
+)
+
+"""
 class ChatService:
     """Service class for handling AI chat interactions"""
 
     def __init__(self):
-        """Initialize the chat service with OpenAI client"""
-        self.api_key = os.environ.get('OPENAI_API_KEY')
-        self.client = None
-        self.model = "gpt-3.5-turbo"  # Using GPT-3.5 for cost efficiency
-        self.max_tokens = 500  # Limit response length
-        self.temperature = 0.7  # Balance between creativity and consistency
+        # """Initialize the chat service with ParlAI blended_skill_talk model"""
+        # self.model_name = "facebook/blenderbot-400M-distill"  # ParlAI blended_skill_talk model
+        self.model_name = MODEL_NAME
+        self.tokenizer = None
+        self.model = None
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.max_length = 250  # Maximum length for generation
+        self.max_new_tokens=20
+        # self.return_full_text=False
+        self.conversation_history = []
 
-        if self.api_key:
-            try:
-                self.client = OpenAI(api_key=self.api_key)
-            except Exception as e:
-                print(f"Failed to initialize OpenAI client: {e}")
-                self.client = None
+        try:
+            print(f"Loading {self.model_name} model...")
+            # self.tokenizer = BlenderbotTokenizer.from_pretrained(self.model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name,use_fast=True)
+            # self.model = BlenderbotForConditionalGeneration.from_pretrained(self.model_name)
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
+            self.model.to(self.device)
+            self.model.eval()  # Set to evaluation mode
+            print(f"Model loaded successfully on {self.device}")
+        except Exception as e:
+            print(f"Failed to initialize ParlAI model: {e}")
+            self.tokenizer = None
+            self.model = None
 
     def is_available(self) -> bool:
         """Check if the chat service is available"""
-        return self.client is not None and self.api_key is not None
+        return self.model is not None and self.tokenizer is not None
 
     def _check_safety_filter(self, message: str) -> Optional[str]:
         """
@@ -89,47 +116,60 @@ class ChatService:
             return {
                 'response': get_fallback_response('api_key'),
                 'success': False,
-                'error_type': 'api_key'
+                'error_type': 'model_not_loaded'
             }
 
         try:
-            # Build messages array for OpenAI
-            messages = []
+            # Build conversation context
+            context_parts = []
 
-            # Add system prompt with context
-            system_prompt = get_system_prompt_with_context(user_context)
-            messages.append({
-                'role': 'system',
-                'content': system_prompt
-            })
+            # Add system context if available
+            if user_context:
+                system_prompt = get_system_prompt_with_context(user_context)
+                context_parts.append(system_prompt)
 
-            # Add conversation history (limit to last 10 messages for context window)
+            # Add conversation history (limit to last 5 exchanges for context)
+            
             if conversation_history:
-                for msg in conversation_history[-10:]:
-                    messages.append({
-                        'role': msg['role'],
-                        'content': msg['content']
-                    })
+                for msg in conversation_history[-2:]:
+                    prefix = "User: " if msg['role'] == 'user' else "Assistant: "
+                    context_parts.append(f"{prefix}{msg['content']}")
 
-            # Add current user message
-            messages.append({
-                'role': 'user',
-                'content': user_message
-            })
+            # Combine context with current message
+            if context_parts:
+                full_input = " ".join(context_parts) + f" User: {user_message}"
+            else:
+                full_input = user_message
 
-            # Call OpenAI API
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                top_p=1,
-                frequency_penalty=0.5,  # Reduce repetition
-                presence_penalty=0.5    # Encourage diverse responses
-            )
+            # Tokenize input
+            inputs = self.tokenizer(
+                [full_input],
+                return_tensors="pt",
+                max_length=512,
+                truncation=True,
+                padding=True
+            ).to(self.device)
 
-            # Extract response
-            ai_response = response.choices[0].message.content.strip()
+            # Generate response
+            with torch.no_grad():
+                output_ids = self.model.generate(
+                    **inputs,
+                    max_length=self.max_length,
+                    num_beams=5,
+                    early_stopping=True,
+                    no_repeat_ngram_size=3,
+                    temperature=0.7,
+                    do_sample=True,
+                    top_k=50,
+                    top_p=0.95, 
+                    max_new_tokens=self.max_new_tokens
+                )
+
+            # Decode response
+            ai_response = self.tokenizer.decode(
+                output_ids[0],
+                skip_special_tokens=True
+            ).strip()
 
             return {
                 'response': ai_response,
@@ -138,26 +178,12 @@ class ChatService:
                 'filtered': False
             }
 
-        except RateLimitError:
-            return {
-                'response': get_fallback_response('rate_limit'),
-                'success': False,
-                'error_type': 'rate_limit'
-            }
-
-        except APIConnectionError:
-            return {
-                'response': get_fallback_response('network'),
-                'success': False,
-                'error_type': 'network'
-            }
-
-        except OpenAIError as e:
-            print(f"OpenAI API error: {e}")
+        except RuntimeError as e:
+            print(f"Model runtime error: {e}")
             return {
                 'response': get_fallback_response('general'),
                 'success': False,
-                'error_type': 'api_error'
+                'error_type': 'runtime_error'
             }
 
         except Exception as e:
