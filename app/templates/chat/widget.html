@@ -9,9 +9,12 @@
 
     <!-- Chat Widget Window -->
     <div id="chatWidgetWindow" class="chat-widget-window" style="display: none;">
-        <div class="chat-widget-header">
+        <div class="chat-widget-header" id="chatWidgetHeader">
             <h6 class="mb-0"><i class="fas fa-robot"></i> StockBot</h6>
             <div>
+                <button id="expandWidget" class="btn btn-sm btn-link text-white p-0 me-2" title="Expand/Collapse">
+                    <i class="fas fa-expand-alt"></i>
+                </button>
                 <button id="minimizeWidget" class="btn btn-sm btn-link text-white p-0 me-2" title="Minimize">
                     <i class="fas fa-minus"></i>
                 </button>
@@ -103,6 +106,12 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        cursor: move;
+        user-select: none;
+    }
+
+    .chat-widget-header:active {
+        cursor: grabbing;
     }
 
     .chat-widget-body {
@@ -170,6 +179,15 @@
         animation-delay: 0.4s;
     }
 
+    .chat-widget-window.expanded {
+        width: 600px !important;
+        height: 700px !important;
+    }
+
+    .chat-widget-window.dragging {
+        transition: none;
+    }
+
     @media (max-width: 768px) {
         .chat-widget-window {
             width: calc(100vw - 40px);
@@ -177,17 +195,89 @@
             bottom: 80px;
             right: 10px;
         }
+
+        .chat-widget-window.expanded {
+            width: calc(100vw - 20px) !important;
+            height: 85vh !important;
+        }
     }
 </style>
 
 <script>
     const chatWidgetBtn = document.getElementById('chatWidgetBtn');
     const chatWidgetWindow = document.getElementById('chatWidgetWindow');
+    const chatWidgetHeader = document.getElementById('chatWidgetHeader');
     const closeWidget = document.getElementById('closeWidget');
     const minimizeWidget = document.getElementById('minimizeWidget');
+    const expandWidget = document.getElementById('expandWidget');
     const widgetForm = document.getElementById('widgetForm');
     const widgetInput = document.getElementById('widgetInput');
     const widgetMessages = document.getElementById('widgetMessages');
+
+    // Drag functionality
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    chatWidgetHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Touch support for mobile
+    chatWidgetHeader.addEventListener('touchstart', dragStart);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('touchend', dragEnd);
+
+    function dragStart(e) {
+        if (e.target.closest('button')) return; // Don't drag when clicking buttons
+
+        if (e.type === 'touchstart') {
+            initialX = e.touches[0].clientX - xOffset;
+            initialY = e.touches[0].clientY - yOffset;
+        } else {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+        }
+
+        if (e.target === chatWidgetHeader || e.target.closest('#chatWidgetHeader')) {
+            isDragging = true;
+            chatWidgetWindow.classList.add('dragging');
+        }
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+
+            if (e.type === 'touchmove') {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+            } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+            }
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, chatWidgetWindow);
+        }
+    }
+
+    function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+        chatWidgetWindow.classList.remove('dragging');
+    }
+
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+    }
 
     // Toggle widget
     chatWidgetBtn.addEventListener('click', () => {
@@ -195,6 +285,20 @@
         chatWidgetWindow.style.display = isVisible ? 'none' : 'flex';
         if (!isVisible) {
             widgetInput.focus();
+        }
+    });
+
+    // Expand/Collapse widget
+    expandWidget.addEventListener('click', (e) => {
+        e.stopPropagation();
+        chatWidgetWindow.classList.toggle('expanded');
+        const icon = expandWidget.querySelector('i');
+        if (chatWidgetWindow.classList.contains('expanded')) {
+            icon.className = 'fas fa-compress-alt';
+            expandWidget.title = 'Collapse';
+        } else {
+            icon.className = 'fas fa-expand-alt';
+            expandWidget.title = 'Expand';
         }
     });
 
@@ -261,7 +365,7 @@
             removeWidgetTyping();
 
             if (response.ok) {
-                addWidgetMessage(data.response);
+                addWidgetMessage(data.response, false);
             } else {
                 addWidgetMessage('Sorry, I encountered an error. Please try again.');
             }

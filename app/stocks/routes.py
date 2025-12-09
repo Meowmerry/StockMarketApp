@@ -40,8 +40,12 @@ def create():
         name = data.get('name', '').strip()
         sector = data.get('sector', '').strip()
         price = data.get('price')
-        shares_outstanding = data.get('shares_outstanding')
-        
+        shares_outstanding = data.get('shares_outstanding', '').strip()
+
+        # Convert empty string to None
+        if not shares_outstanding:
+            shares_outstanding = None
+
         # Validation
         if not ticker or not name or not price:
             error_msg = 'Ticker, name, and price are required.'
@@ -49,7 +53,7 @@ def create():
                 return jsonify({'error': error_msg}), 400
             flash(error_msg, 'error')
             return render_template('stocks/create.html')
-        
+
         try:
             price = Decimal(str(price))
             if price <= 0:
@@ -60,8 +64,8 @@ def create():
                 return jsonify({'error': error_msg}), 400
             flash(error_msg, 'error')
             return render_template('stocks/create.html')
-        
-        if shares_outstanding:
+
+        if shares_outstanding is not None:
             try:
                 shares_outstanding = int(shares_outstanding)
                 if shares_outstanding <= 0:
@@ -111,8 +115,12 @@ def edit(ticker):
         name = data.get('name', '').strip()
         sector = data.get('sector', '').strip()
         price = data.get('price')
-        shares_outstanding = data.get('shares_outstanding')
-        
+        shares_outstanding = data.get('shares_outstanding', '').strip()
+
+        # Convert empty string to None
+        if not shares_outstanding:
+            shares_outstanding = None
+
         # Validation
         if not name or not price:
             error_msg = 'Name and price are required.'
@@ -120,7 +128,7 @@ def edit(ticker):
                 return jsonify({'error': error_msg}), 400
             flash(error_msg, 'error')
             return render_template('stocks/edit.html', stock=stock)
-        
+
         try:
             price = Decimal(str(price))
             if price <= 0:
@@ -131,8 +139,8 @@ def edit(ticker):
                 return jsonify({'error': error_msg}), 400
             flash(error_msg, 'error')
             return render_template('stocks/edit.html', stock=stock)
-        
-        if shares_outstanding:
+
+        if shares_outstanding is not None:
             try:
                 shares_outstanding = int(shares_outstanding)
                 if shares_outstanding <= 0:

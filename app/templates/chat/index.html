@@ -6,8 +6,8 @@
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div class="card shadow " id="chatBotWindow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" id="chatBotHeader">
                     <h4 class="mb-0">
                         <i class="fas fa-robot"></i> StockBot AI Assistant
                     </h4>
@@ -71,6 +71,13 @@
 </div>
 
 <style>
+    .card-header{
+        cursor: move;
+        user-select: none;
+    }
+    .card-header:active {
+        cursor: grabbing;
+    }
     .chat-messages {
         height: 500px;
         overflow-y: auto;
@@ -166,6 +173,73 @@
     const sendBtn = document.getElementById('sendBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
     const quickQuestionBtns = document.querySelectorAll('.quick-question');
+    const chatBotHeader = document.getElementById('chatBotHeader');
+    const chatBotWindow = document.getElementById('chatBotWindow');
+
+    // Drag to move chat window
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    chatBotHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+      // Touch support for mobile
+    chatBotWindow.addEventListener('touchstart', dragStart);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('touchend', dragEnd);
+
+    function dragStart(e) {
+        if (e.target.closest('button')) return; // Don't drag when clicking buttons
+
+        if (e.type === 'touchstart') {
+            initialX = e.touches[0].clientX - xOffset;
+            initialY = e.touches[0].clientY - yOffset;
+        } else {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+        }
+
+        if (e.target === chatBotHeader || e.target.closest('#chatBotHeader')) {
+            isDragging = true;
+            chatBotWindow.classList.add('dragging');
+        }
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+
+            if (e.type === 'touchmove') {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+            } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+            }
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, chatBotWindow);
+        }
+    }
+
+    function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+        chatBotWindow.classList.remove('dragging');
+    }
+
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+    }
 
     // Auto-scroll to bottom
     function scrollToBottom() {

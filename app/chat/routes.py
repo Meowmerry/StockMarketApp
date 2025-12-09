@@ -205,12 +205,13 @@ def _get_user_context(user_id: int) -> dict:
     ]
 
     # Calculate portfolio summary
+    from sqlalchemy import case
     holdings_query = db.session.query(
         Stock.ticker,
         Stock.name,
         Stock.price,
         func.sum(
-            func.case(
+            case(
                 (Trade.side == 'buy', Trade.quantity),
                 else_=-Trade.quantity
             )
@@ -222,7 +223,7 @@ def _get_user_context(user_id: int) -> dict:
         Stock.id, Stock.ticker, Stock.name, Stock.price
     ).having(
         func.sum(
-            func.case(
+            case(
                 (Trade.side == 'buy', Trade.quantity),
                 else_=-Trade.quantity
             )

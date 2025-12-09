@@ -10,7 +10,7 @@ A full-stack stock market web application built with **Python only** - no JavaSc
 - **Trade Execution**: Buy/sell trades with quantity, price, and timestamp tracking
 - **Portfolio View**: Real-time portfolio aggregation with unrealized P&L calculations
 - **Price Simulation**: Simulate market conditions (random changes, crashes, rallies)
-- **AI Chatbot**: Educational AI assistant powered by OpenAI GPT for stock market questions
+- **AI Chatbot**: Educational AI assistant powered by free local models (no API costs)
 - **REST API**: Complete JSON API for all operations
 - **Responsive UI**: Modern Bootstrap-based interface with Jinja2 templates
 
@@ -20,13 +20,14 @@ A full-stack stock market web application built with **Python only** - no JavaSc
 - **Database**: PostgreSQL (with SQLite fallback for local dev)
 - **Authentication**: Flask-Login with secure password hashing
 - **API**: RESTful endpoints with JSON responses
-- **AI Integration**: OpenAI GPT-3.5-turbo chatbot
+- **AI Integration**: Ollama with Llama 3.2 (free, local, no API key required)
 - **Testing**: Comprehensive unit and integration tests
 
 ## 📋 Requirements
 
 - Python 3.8+
 - pip (Python package installer)
+- Ollama (for AI chatbot) - installation instructions below
 
 ## 🛠️ Installation
 
@@ -54,19 +55,33 @@ This will automatically set up the virtual environment, install dependencies, an
    ```bash
    cp .env.example .env
    # Edit .env and configure:
-   # - OPENAI_API_KEY (required for AI chatbot)
    # - DATABASE_URL (optional - defaults to SQLite)
+   # Note: AI chatbot uses free local models, no API key required!
    ```
 
    See [POSTGRESQL_SETUP.md](POSTGRESQL_SETUP.md) for database configuration.
 
-4. **Initialize the database**
+4. **Set up AI Chatbot (Ollama)**
+   ```bash
+   # Install Ollama
+   brew install ollama  # Mac/Linux
+
+   # Start Ollama server (in a separate terminal or background)
+   ollama serve
+
+   # Download Llama 3.2 model (in another terminal)
+   ollama pull llama3.2
+   ```
+
+   See the [AI Chatbot Configuration](#ai-chatbot-configuration) section for detailed setup.
+
+5. **Initialize the database**
    ```bash
    python run.py
    ```
    This will create the database and start the development server.
 
-5. **Populate with sample data (optional)**
+6. **Populate with sample data (optional)**
    ```bash
    python sample_data.py
    ```
@@ -74,7 +89,24 @@ This will automatically set up the virtual environment, install dependencies, an
 ## 🚀 Running the Application
 
 ### Development Mode
+
+**Important**: Make sure Ollama is running first!
+
+**If using brew services (recommended)**:
 ```bash
+# Start Ollama once (runs in background)
+brew services start ollama
+
+# Start Flask app
+python run.py
+```
+
+**If running manually**:
+```bash
+# Terminal 1: Start Ollama (keeps this terminal busy)
+ollama serve
+
+# Terminal 2: Start Flask app (in a new terminal)
 python run.py
 ```
 
@@ -297,24 +329,183 @@ FLASK_ENV=development
 
 # Database Configuration
 DATABASE_URL=sqlite:///stock_market.db
-
-# OpenAI API Configuration (Required for AI Chatbot)
-OPENAI_API_KEY=your-openai-api-key-here
 ```
-
-### Getting an OpenAI API Key
-
-1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Sign up or log in to your account
-3. Navigate to API Keys section
-4. Create a new API key
-5. Add it to your `.env` file as `OPENAI_API_KEY`
-
-**Note**: The chatbot will display a fallback message if the API key is not configured.
 
 For PostgreSQL:
 ```bash
 DATABASE_URL=postgresql://user:password@localhost/stock_market
+```
+
+### AI Chatbot Configuration
+
+The application uses **Ollama with Llama 3.2** - a free local AI that provides high-quality educational responses about stocks and investing!
+
+**Current Setup**: Ollama + Llama 3.2 (2GB)
+- ✅ Free and open-source
+- ✅ Runs locally on your computer
+- ✅ Educational, accurate responses
+- ✅ No API costs or token limits
+- ✅ Privacy-focused (all data stays local)
+
+#### Step-by-Step Setup
+
+**Step 1: Install Ollama**
+
+Mac:
+```bash
+brew install ollama
+```
+
+Linux:
+```bash
+curl -fsSL https://ollama.ai/install.sh | sh
+```
+
+Windows: Download from [ollama.ai](https://ollama.ai)
+
+**Step 2: Start Ollama Server**
+
+You have several options for running the Ollama server:
+
+**Option A: Using brew services (Recommended - runs automatically)**
+```bash
+brew services start ollama
+```
+This starts Ollama as a background service that will:
+- Run automatically when your computer starts
+- Restart automatically if it crashes
+- Not block your terminal
+
+To stop it later:
+```bash
+brew services stop ollama
+```
+
+To check if it's running:
+```bash
+brew services list | grep ollama
+```
+
+**Option B: Run in foreground (simple but blocks terminal)**
+```bash
+ollama serve
+```
+This starts Ollama on `http://localhost:11434` but keeps the terminal busy. You'll need to open a new terminal for other commands. Press `Ctrl+C` to stop it.
+
+**Option C: Run in background manually**
+```bash
+ollama serve &
+```
+Runs Ollama in the background so you can continue using the same terminal. To stop it:
+```bash
+pkill ollama
+```
+
+**Step 3: Download the Llama 3.2 Model**
+
+In a new terminal:
+```bash
+ollama pull llama3.2
+```
+
+This downloads the model (~2GB). It only needs to be done once.
+
+**Step 4: Verify Setup**
+
+Test that Ollama is working:
+```bash
+curl http://localhost:11434/api/tags
+```
+
+You should see output showing `llama3.2` is available.
+
+**Step 5: Run Your Flask App**
+
+```bash
+python run.py
+```
+
+The chatbot will now use Ollama automatically!
+
+#### Alternative Models
+
+You can switch to different models by editing [chat_service.py:15](app/chat_service.py#L15):
+
+```python
+# Current (recommended for finance/education)
+MODEL_NAME = "llama3.2"
+
+# For faster responses (smaller model)
+MODEL_NAME = "phi"  # Run: ollama pull phi
+
+# For better reasoning (larger model)
+MODEL_NAME = "mistral"  # Run: ollama pull mistral
+
+# For coding help
+MODEL_NAME = "codellama"  # Run: ollama pull codellama
+```
+
+After changing the model, download it:
+```bash
+ollama pull <model-name>
+```
+
+Then restart your Flask app.
+
+#### Troubleshooting
+
+**Ollama not responding?**
+```bash
+# Check if Ollama is running
+lsof -i :11434
+
+# Or check brew services
+brew services list | grep ollama
+
+# If not running, start it
+brew services start ollama  # Recommended
+# OR
+ollama serve  # Manual start
+```
+
+**How to stop Ollama?**
+```bash
+# If using brew services
+brew services stop ollama
+
+# If running manually in foreground
+# Press Ctrl+C in the terminal running ollama serve
+
+# If running in background with &
+pkill ollama
+```
+
+**Model not found?**
+```bash
+# List installed models
+ollama list
+
+# Download the model
+ollama pull llama3.2
+```
+
+**Slow responses?**
+- Llama 3.2 runs on CPU and may take 3-10 seconds
+- Try a smaller model like `phi` for faster responses
+- Or upgrade to a Mac with Apple Silicon for GPU acceleration
+
+#### Architecture
+
+```
+Flask App (port 5001)
+    ↓
+chat_service.py
+    ↓ HTTP POST request
+Ollama Server (port 11434)
+    ↓
+Llama 3.2 Model
+    ↓ Generated response
+Back to user
 ```
 
 ## 🏗️ Project Structure
