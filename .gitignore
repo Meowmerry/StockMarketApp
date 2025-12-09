@@ -23,6 +23,9 @@ ENV/
 # Environment Variables
 .env
 .env.example
+
+# Backup files
+*.bak
 # Database
 *.db
 instance/
