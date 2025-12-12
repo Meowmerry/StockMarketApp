@@ -489,6 +489,8 @@ ollama list
 ollama pull llama3.2
 ```
 
+
+
 **Slow responses?**
 - Llama 3.2 runs on CPU and may take 3-10 seconds
 - Try a smaller model like `phi` for faster responses
