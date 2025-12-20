@@ -2,6 +2,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from pgvector.sqlalchemy import Vector
 from app import db, login_manager
 
 class User(UserMixin, db.Model):
@@ -99,3 +100,30 @@ class ChatMessage(db.Model):
 
     def __repr__(self):
         return f'<ChatMessage {self.role}: {self.content[:50]}...>'
+
+class StockDocument(db.Model):
+    """Store stock-related documents with embeddings for RAG"""
+    __tablename__ = 'stock_document'
+
+    id = db.Column(db.Integer, primary_key=True)
+    stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=True)
+    content = db.Column(db.Text, nullable=False)
+    embedding = db.Column(Vector(384))  # 384-dimensional vector for MiniLM model
+    doc_type = db.Column(db.String(50))  # 'faq', 'stock_info', 'news', 'guide', 'definition'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationship to stock (optional)
+    stock = db.relationship('Stock', backref='documents')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'stock_id': self.stock_id,
+            'content': self.content,
+            'doc_type': self.doc_type,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'ticker': self.stock.ticker if self.stock else None
+        }
+
+    def __repr__(self):
+        return f'<StockDocument {self.doc_type}: {self.content[:50]}...>'

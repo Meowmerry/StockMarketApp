@@ -4,3 +4,9 @@ I'm building a stock market application and need help deciding on the tech stack
 - Scale to potentially thousands of concurrent users
 
 What are the key factors I should consider when choosing the tech stack? Help me think through the trade-offs.
+
+# Connect to your database
+psql -U thasanee -d stock_market_db
+
+# Enable the extension (run this in psql)
+CREATE EXTENSION IF NOT EXISTS vector;
